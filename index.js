@@ -198,6 +198,33 @@ app.get('/qr-image', async (req, res) => {
     }
 });
 
+// Endpoint /qr-status
+app.get('/qr-status', async (req, res) => {
+    try {
+        const state = await client.getState();
+        if (state === 'CONNECTED') {
+            return res.json({ status: 'connected', message: 'WhatsApp is connected' });
+        } else {
+            if (latestQR) {
+                const dataUrl = await QRCodeLib.toDataURL(latestQR, { type: 'image/png' });
+                res.send(`
+                    <html>
+                    <head><title>QR Code</title></head>
+                    <body>
+                        <h1>Scan QR to connect</h1>
+                        <img src="${dataUrl}" alt="QR Code"/>
+                    </body>
+                    </html>
+                `);
+            } else {
+                return res.status(404).send('No QR available, please wait for QR generation');
+            }
+        }
+    } catch (e) {
+        return res.status(500).json({ error: 'Error checking status' });
+    }
+});
+
 // Actualización del endpoint /enviar para agregar verificación del estado del cliente
 app.post('/enviar', upload.single('pdf'), async (req, res) => {
     console.log('Solicitud recibida en /enviar');
@@ -237,6 +264,26 @@ app.post('/enviar', upload.single('pdf'), async (req, res) => {
         console.error('Error enviando datos:', error);
         res.status(500).json({ error: error.toString() });
     }
+});
+
+// Endpoint /generate-qr
+app.get('/generate-qr', async (req, res) => {
+    try {
+        const state = await client.getState();
+        if (state === 'CONNECTED') {
+            await client.logout();
+            return res.json({ message: 'Logged out, new QR will be generated' });
+        } else {
+            return res.json({ message: 'Not connected, QR should be available or generating' });
+        }
+    } catch (e) {
+        return res.status(500).json({ error: e.toString() });
+    }
+});
+
+// Keep-alive endpoint to prevent Render from detecting pause
+app.get('/keep-alive', (req, res) => {
+    res.status(200).send('OK');
 });
 
 // Arrancar el servidor Express

@@ -1,0 +1,3 @@
+- [x] Agregar endpoint /qr-status que muestre QR si no conectado, o mensaje de conectado si ya autenticado
+- [x] Agregar endpoint /generate-qr para forzar generación de QR si no conectado
+- [ ] Probar los endpoints localmente para verificar funcionamiento
